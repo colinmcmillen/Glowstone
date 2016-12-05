@@ -775,7 +775,7 @@ public final class GlowWorld implements World {
     @Override
     public void setDifficulty(Difficulty difficulty) {
         this.difficulty = difficulty;
-        ServerDifficultyMessage message = new ServerDifficultyMessage(difficulty.getValue());
+        ServerDifficultyMessage message = new ServerDifficultyMessage(difficulty);
         for (GlowPlayer player : getRawPlayers()) {
             player.getSession().send(message);
         }
@@ -1027,6 +1027,19 @@ public final class GlowWorld implements World {
     @Override
     public Block getHighestBlockAt(Location location) {
         return getBlockAt(location.getBlockX(), getHighestBlockYAt(location), location.getBlockZ());
+    }
+
+    public Block getHighestBlockAt(Location location, Material[] except) {
+        Block block = getHighestBlockAt(location);
+        List<Material> array = Arrays.asList(except);
+        for (int i = 0; i < 6; i++) {
+            block = block.getLocation().clone().subtract(0, i == 0 ? 0 : 1, 0).getBlock();
+            if (block.getType() == Material.AIR || array.contains(block.getType())) {
+                continue;
+            }
+            return block;
+        }
+        return getHighestBlockAt(location);
     }
 
     @Override
@@ -1519,15 +1532,25 @@ public final class GlowWorld implements World {
 
     @Override
     public void playSound(Location location, Sound sound, float volume, float pitch) {
-        if (location == null || sound == null) return;
-
-        double radiusSquared = Math.pow(volume * 16, 2);
-        getRawPlayers().stream().filter(player -> player.getLocation().distanceSquared(location) <= radiusSquared).forEach(player -> player.playSound(location, sound, volume, pitch));
+        playSound(location, sound, sound.getCategory(), volume, pitch);
     }
 
     @Override
-    public void playSound(Location location, String s, float v, float v1) {
+    public void playSound(Location location, String sound, float volume, float pitch) {
+        playSound(location, Sound.getSound(sound), volume, pitch);
+    }
 
+    @Override
+    public void playSound(Location location, Sound sound, SoundCategory category, float volume, float pitch) {
+        if (location == null || sound == null) return;
+
+        double radiusSquared = Math.pow(volume * 16, 2);
+        getRawPlayers().stream().filter(player -> player.getLocation().distanceSquared(location) <= radiusSquared).forEach(player -> player.playSound(location, sound, category, volume, pitch));
+    }
+
+    @Override
+    public void playSound(Location location, String sound, SoundCategory category, float volume, float pitch) {
+        playSound(location, Sound.getSound(sound), category, volume, pitch);
     }
 
     @Override

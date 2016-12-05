@@ -1,5 +1,7 @@
 package net.glowstone.generator.populators.overworld;
 
+import net.glowstone.GlowWorld;
+import net.glowstone.generator.decorators.EntityDecorator;
 import net.glowstone.generator.decorators.overworld.*;
 import net.glowstone.generator.decorators.overworld.FlowerDecorator.FlowerDecoration;
 import net.glowstone.generator.decorators.overworld.TreeDecorator.TreeDecoration;
@@ -10,6 +12,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.entity.EntityType;
 import org.bukkit.generator.BlockPopulator;
 
 import java.util.*;
@@ -38,6 +41,7 @@ public class BiomePopulator extends BlockPopulator {
     protected final CactusDecorator cactusDecorator = new CactusDecorator();
     protected final FlowingLiquidDecorator flowingWaterDecorator = new FlowingLiquidDecorator(Material.WATER);
     protected final FlowingLiquidDecorator flowingLavaDecorator = new FlowingLiquidDecorator(Material.LAVA);
+    protected final List<EntityDecorator> entityDecorators = new ArrayList<>();
     private final List<BlockPopulator> inGroundPopulators = new ArrayList<>();
     private final List<BlockPopulator> onGroundPopulators = new ArrayList<>();
 
@@ -92,6 +96,9 @@ public class BiomePopulator extends BlockPopulator {
         cactusDecorator.setAmount(0);
         flowingWaterDecorator.setAmount(50);
         flowingLavaDecorator.setAmount(20);
+
+        EntityDecorator animalDecorator = new EntityDecorator(EntityType.COW, EntityType.SHEEP, EntityType.CHICKEN, EntityType.PIG);
+        entityDecorators.add(animalDecorator);
     }
 
     public Collection<Biome> getBiomes() {
@@ -113,6 +120,13 @@ public class BiomePopulator extends BlockPopulator {
     protected void populateOnGround(World world, Random random, Chunk chunk) {
         for (BlockPopulator populator : onGroundPopulators) {
             populator.populate(world, random, chunk);
+        }
+        boolean doMobSpawning = ((GlowWorld) world).getGameRuleMap().getBoolean("doMobSpawning");
+        if (!doMobSpawning) {
+            return;
+        }
+        for (EntityDecorator entityDecorator : entityDecorators) {
+            entityDecorator.populate(world, random, chunk);
         }
     }
 }
